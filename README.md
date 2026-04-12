@@ -25,18 +25,23 @@ encoded private key for RSA and ECDSA.
 `options`:
 
 * `algorithm` (default: `HS256`)
-* `expiresInMinutes`
+* `expiresInMinutes` or `expiresInSeconds`
 * `audience`
 * `subject`
 * `issuer`
 * `noTimestamp`
+* `headers`
 
 If `payload` is not a buffer or a string, it will be coerced into a string
 using `JSON.stringify`.
 
-If any `expiresInMinutes`, `audience`, `subject`, `issuer` are not provided, there is no default. The  jwt generated won't include those properties in the payload.
+If any `expiresInMinutes`, `audience`, `subject`, `issuer` are not provided, there is no default. The jwt generated won't include those properties in the payload.
+
+Additional headers can be provided via the `headers` object.
 
 Generated jwts will include an `iat` claim by default unless `noTimestamp` is specified.
+
+Setting `ignoreExpiration` to `true` will prevent expired tokens from generating an error.
 
 Example
 
@@ -51,6 +56,13 @@ var token = jwt.sign({ foo: 'bar' }, cert, { algorithm: 'RS256'});
 ```
 
 ### jwt.verify(token, secretOrPublicKey, [options, callback])
+
+`options`:
+
+*  `ignoreExpiration`
+*  `audience`
+*  `issuer`
+
 
 (Asynchronous) If a callback is supplied, function acts asynchronously. Callback passed the payload decoded if the signature (and optionally expiration, audience, issuer) are valid. If not, it will be passed the error.
 
@@ -80,12 +92,12 @@ jwt.verify(token, 'shhhhh', function(err, decoded) {
 try {
   var decoded = jwt.verify(token, 'wrong-secret');
 } catch(err) {
-  // err 
+  // err
 }
 
 // invalid token
 jwt.verify(token, 'wrong-secret', function(err, decoded) {
-  // err 
+  // err
   // decoded undefined
 });
 
@@ -106,14 +118,18 @@ var cert = fs.readFileSync('public.pem');  // get public key
 jwt.verify(token, cert, { audience: 'urn:foo', issuer: 'urn:issuer' }, function(err, decoded) {
   // if issuer mismatch, err == invalid issuer
 });
-      
+
 ```
 
-### jwt.decode(token)
+### jwt.decode(token [, options])
 
 (Synchronous) Returns the decoded payload without verifying if the signature is valid.
 
 `token` is the JsonWebToken string
+
+`options`:
+
+* `json`: force JSON.parse on the payload even if the header doesn't contain `"typ":"JWT"`.
 
 Example
 
@@ -139,7 +155,7 @@ Error object:
 ```js
 jwt.verify(token, 'shhhhh', function(err, decoded) {
   if (err) {
-    /* 
+    /*
       err = {
         name: 'TokenExpiredError',
         message: 'jwt expired',
@@ -158,13 +174,13 @@ Error object:
   * 'jwt malformed'
   * 'jwt signature is required'
   * 'invalid signature'
-  * 'jwt audience invalid. expected: [PAYLOAD AUDIENCE]'
-  * 'jwt issuer invalid. expected: [PAYLOAD ISSUER]'
+  * 'jwt audience invalid. expected: [OPTIONS AUDIENCE]'
+  * 'jwt issuer invalid. expected: [OPTIONS ISSUER]'
 
 ```js
 jwt.verify(token, 'shhhhh', function(err, decoded) {
   if (err) {
-    /* 
+    /*
       err = {
         name: 'JsonWebTokenError',
         message: 'jwt malformed'
@@ -178,11 +194,11 @@ jwt.verify(token, 'shhhhh', function(err, decoded) {
 
 Array of supported algorithms. The following algorithms are currently supported.
 
-alg Parameter Value | Digital Signature or MAC Algorithm 
+alg Parameter Value | Digital Signature or MAC Algorithm
 ----------------|----------------------------
-HS256 | HMAC using SHA-256 hash algorithm 
-HS384 | HMAC using SHA-384 hash algorithm 
-HS512 | HMAC using SHA-512 hash algorithm 
+HS256 | HMAC using SHA-256 hash algorithm
+HS384 | HMAC using SHA-384 hash algorithm
+HS512 | HMAC using SHA-512 hash algorithm
 RS256 | RSASSA using SHA-256 hash algorithm
 RS384 | RSASSA using SHA-384 hash algorithm
 RS512 | RSASSA using SHA-512 hash algorithm
@@ -199,7 +215,10 @@ If you have found a bug or if you have a feature request, please report them at 
 
 * X.509 certificate chain is not checked
 
-# License
+## Author
 
-MIT
+[Auth0](auth0.com)
 
+## License
+
+This project is licensed under the MIT license. See the [LICENSE](LICENSE) file for more info.
